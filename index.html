@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mobile Snake Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: sans-serif;
+      color: white;
+      height: 100vh;
+    }
+
+    canvas {
+      background: #000;
+      box-shadow: 0 0 10px #0f0;
+      margin-top: 20px;
+      touch-action: none;
+    }
+
+    #controls {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(3, 60px);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      background: #222;
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .btn:active {
+      background: #0f0;
+    }
+
+    .invisible {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>🐍 Snake Game</h2>
+  <canvas id="game" width="320" height="320"></canvas>
+
+  <!-- Touch Controls -->
+  <div id="controls">
+    <div class="btn invisible"></div>
+    <div class="btn" onclick="setDir(0, -1)">⬆️</div>
+    <div class="btn invisible"></div>
+
+    <div class="btn" onclick="setDir(-1, 0)">⬅️</div>
+    <div class="btn invisible"></div>
+    <div class="btn" onclick="setDir(1, 0)">➡️</div>
+
+    <div class="btn invisible"></div>
+    <div class="btn" onclick="setDir(0, 1)">⬇️</div>
+    <div class="btn invisible"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake = [{ x: 10, y: 10 }];
+    let dx = 0;
+    let dy = 0;
+    let food = spawnFood();
+    let score = 0;
+
+    function gameLoop() {
+      move();
+      if (checkCollision()) {
+        alert("Game Over! Score: " + score);
+        location.reload();
+        return;
+      }
+
+      if (eatFood()) {
+        snake.push({ ...snake[snake.length - 1] });
+        score++;
+        food = spawnFood();
+      }
+
+      draw();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Snake
+      ctx.fillStyle = '#0f0';
+      snake.forEach(seg => {
+        ctx.fillRect(seg.x * gridSize, seg.y * gridSize, gridSize - 2, gridSize - 2);
+      });
+
+      // Food
+      ctx.fillStyle = '#f00';
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    }
+
+    function move() {
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+      snake.unshift(head);
+      snake.pop();
+    }
+
+    function eatFood() {
+      return snake[0].x === food.x && snake[0].y === food.y;
+    }
+
+    function checkCollision() {
+      const head = snake[0];
+      if (
+        head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount ||
+        snake.slice(1).some(s => s.x === head.x && s.y === head.y)
+      ) return true;
+      return false;
+    }
+
+    function spawnFood() {
+      let pos;
+      do {
+        pos = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+      } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+      return pos;
+    }
+
+    // Keyboard controls
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowUp' && dy === 0) setDir(0, -1);
+      if (e.key === 'ArrowDown' && dy === 0) setDir(0, 1);
+      if (e.key === 'ArrowLeft' && dx === 0) setDir(-1, 0);
+      if (e.key === 'ArrowRight' && dx === 0) setDir(1, 0);
+    });
+
+    // Touch control function
+    function setDir(x, y) {
+      if ((x !== 0 && x !== -dx) || (y !== 0 && y !== -dy)) {
+        dx = x;
+        dy = y;
+      }
+    }
+
+    setInterval(gameLoop, 150);
+  </script>
+</body>
+</html>
